@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Stitch Counter</title>
-<meta name="theme-color" content="#4F8A62">
 <style>
 :root{
   --bg:#E6EAEE; --surface:#F6F8FA; --ink:#1D2733; --muted:#5E6B78; --line:#C9D1D9;
@@ -29,11 +28,9 @@
 }
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{
-  margin:0; background:var(--bg); color:var(--ink);
+body{margin:0; background:var(--bg); color:var(--ink);
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  font-size:16px; line-height:1.45; -webkit-tap-highlight-color:transparent;
-}
+  font-size:16px; line-height:1.45; -webkit-tap-highlight-color:transparent}
 main{max-width:34rem; margin:0 auto; padding:1rem 1rem 2.5rem}
 button{font:inherit; color:inherit; cursor:pointer}
 button:focus-visible{outline:3px solid var(--row); outline-offset:2px}
@@ -45,73 +42,58 @@ h1{font-size:1.15rem; font-weight:800; margin:0; letter-spacing:-.01em}
 .pad.on .dot{background:var(--knit)}
 .pad.on{color:var(--ink)}
 
-/* Counter */
-.counter{
-  background:var(--surface); border-radius:1.5rem; padding:1.25rem 1.25rem 1rem;
-  border:2px solid var(--row); transition:border-color .2s;
-}
+.counter{background:var(--surface); border-radius:1.5rem; padding:1.25rem 1.25rem 1rem;
+  border:2px solid var(--row); transition:border-color .2s}
 .rowline{display:flex; justify-content:space-between; align-items:baseline; font-size:.95rem; color:var(--muted)}
 .rowline strong{color:var(--row); font-weight:800; font-size:1.05rem}
-.big{
-  font-size:clamp(5.5rem,30vw,9.5rem); font-weight:800; line-height:.95;
-  text-align:center; margin:.4rem 0 .2rem; font-variant-numeric:tabular-nums;
-  letter-spacing:-.04em;
-}
+.big{font-size:clamp(5.5rem,30vw,9.5rem); font-weight:800; line-height:.95; text-align:center;
+  margin:.4rem 0 .2rem; font-variant-numeric:tabular-nums; letter-spacing:-.04em}
 .big.bump{animation:bump .18s ease-out}
 @keyframes bump{from{transform:scale(1.06)}to{transform:scale(1)}}
 .unit{text-align:center; color:var(--muted); font-size:.95rem; margin-bottom:.75rem}
 
-/* Stitch chain: one V per stitch */
+/* One V per finished row, colored by row type */
 .chain{display:flex; flex-wrap:wrap; gap:1px 0; justify-content:center; min-height:1.25rem; margin-bottom:1rem}
 .chain svg{width:14px; height:18px; display:block}
-.chain path{fill:none; stroke:var(--row); stroke-width:2.2; stroke-linecap:round}
-.chain .more{font-size:.8rem; color:var(--muted); align-self:center; margin-left:.35rem}
+.chain path{fill:none; stroke-width:2.4; stroke-linecap:round}
+.chain .more{font-size:.8rem; color:var(--muted); align-self:center; margin-right:.35rem}
 
 .steps{display:grid; grid-template-columns:1fr 1fr; gap:.6rem}
-.stepbtn{
-  border:0; border-radius:1rem; padding:1rem .5rem; font-size:1.6rem; font-weight:800;
-  background:var(--bg); display:flex; align-items:center; justify-content:center; gap:.4rem;
-}
+.stepbtn{border:0; border-radius:1rem; padding:1rem .5rem; font-size:1.3rem; font-weight:800;
+  background:var(--bg); display:flex; align-items:center; justify-content:center; gap:.4rem}
 .stepbtn:active{background:var(--line)}
-.stepbtn small{font-size:.8rem; font-weight:400; color:var(--muted)}
 
-/* Sections */
 section{margin-top:1.25rem}
 h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
 .seg{display:flex; flex-wrap:wrap; gap:.4rem}
-.seg button{
-  border:1.5px solid var(--line); background:var(--surface); border-radius:999px;
-  padding:.45rem .9rem; min-width:2.75rem;
-}
+.seg button{border:1.5px solid var(--line); background:var(--surface); border-radius:999px;
+  padding:.45rem .9rem; min-width:2.75rem}
 .seg button[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
 .types button[data-type="knit"][aria-pressed="true"]{background:var(--knit); border-color:var(--knit); color:#fff}
 .types button[data-type="purl"][aria-pressed="true"]{background:var(--purl); border-color:var(--purl); color:#fff}
 .types button[data-type="increase"][aria-pressed="true"]{background:var(--increase); border-color:var(--increase); color:#fff}
 .types button[data-type="decrease"][aria-pressed="true"]{background:var(--decrease); border-color:var(--decrease); color:#fff}
-.seg input{
-  width:4.5rem; border:1.5px solid var(--line); background:var(--surface); color:var(--ink);
-  border-radius:999px; padding:.45rem .75rem; font:inherit;
-}
+.seg input{width:4.5rem; border:1.5px solid var(--line); background:var(--surface); color:var(--ink);
+  border-radius:999px; padding:.45rem .75rem; font:inherit}
 
-.actions{display:grid; grid-template-columns:2fr 1fr; gap:.6rem; margin-top:1.25rem}
-.primary{border:0; border-radius:1rem; padding:.9rem; background:var(--row); color:#fff; font-weight:800; font-size:1.05rem}
-.secondary{border:1.5px solid var(--line); background:var(--surface); border-radius:1rem; padding:.9rem}
+.actions{margin-top:1.25rem}
+.secondary{width:100%; border:1.5px solid var(--line); background:var(--surface); border-radius:1rem; padding:.8rem}
 .secondary:disabled{opacity:.45; cursor:default}
 
 .toggles{display:flex; flex-direction:column; gap:.55rem}
 .toggles label{display:flex; align-items:center; gap:.6rem}
 .toggles input{width:1.15rem; height:1.15rem; accent-color:var(--row)}
 
-/* History */
+.summary{margin:0 0 .6rem; font-size:.92rem}
 .history{list-style:none; margin:0; padding:0; border-top:1px solid var(--line)}
-.history li{display:grid; grid-template-columns:4.5rem 1fr auto; gap:.5rem; padding:.55rem 0; border-bottom:1px solid var(--line); align-items:center}
+.history li{display:grid; grid-template-columns:4.5rem 1fr; gap:.5rem; padding:.5rem 0; border-bottom:1px solid var(--line)}
 .history .tag{font-weight:600}
 .history .n{font-variant-numeric:tabular-nums; color:var(--muted)}
 .empty{color:var(--muted); font-size:.92rem; margin:0}
 
 .map{width:100%; border-collapse:collapse; font-size:.92rem}
 .map td{padding:.35rem 0; border-bottom:1px solid var(--line)}
-.map td:first-child{color:var(--muted); width:45%}
+.map td:first-child{color:var(--muted); width:40%}
 .map td:last-child{text-align:right; width:6.5rem}
 .map .bind{font-weight:600}
 .change{border:1.5px solid var(--line); background:var(--surface); border-radius:999px; padding:.3rem .8rem; font-size:.88rem}
@@ -130,23 +112,18 @@ h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
   </div>
 
   <div class="counter">
-    <div class="rowline"><span>Row <b id="rowNum">1</b></span><strong id="rowType">Knit row</strong></div>
+    <div class="rowline"><span>Up next</span><strong id="rowType">Knit row</strong></div>
     <div class="big" id="count" aria-live="polite">0</div>
-    <div class="unit" id="unit">stitches</div>
+    <div class="unit" id="unit">rows</div>
     <div class="chain" id="chain" aria-hidden="true"></div>
     <div class="steps">
-      <button class="stepbtn" id="minus" aria-label="Subtract">− <span id="minusN">1</span></button>
-      <button class="stepbtn" id="plus" aria-label="Add">+ <span id="plusN">1</span></button>
+      <button class="stepbtn" id="minus">− <span id="minusN">1</span></button>
+      <button class="stepbtn" id="plus">+ <span id="plusN">1</span></button>
     </div>
   </div>
 
-  <div class="actions">
-    <button class="primary" id="finish">Finish row</button>
-    <button class="secondary" id="undo" disabled>Undo</button>
-  </div>
-
   <section>
-    <h2>Row type</h2>
+    <h2>Next row type</h2>
     <div class="seg types" id="types">
       <button data-type="knit">Knit</button>
       <button data-type="purl">Purl</button>
@@ -155,24 +132,23 @@ h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
     </div>
   </section>
 
+  <div class="actions"><button class="secondary" id="undo" disabled>Undo last change</button></div>
+
   <section>
-    <h2>Count by</h2>
+    <h2>Count rows by</h2>
     <div class="seg" id="stepSeg">
       <button data-step="1">1</button>
       <button data-step="2">2</button>
       <button data-step="3">3</button>
       <button data-step="4">4</button>
-      <button data-step="5">5</button>
-      <button data-step="10">10</button>
-      <input id="customStep" type="number" min="1" max="999" inputmode="numeric" placeholder="Other" aria-label="Custom step">
+      <input id="customStep" type="number" min="1" max="99" inputmode="numeric" placeholder="Other" aria-label="Custom step">
     </div>
   </section>
 
   <section>
     <h2>Options</h2>
     <div class="toggles">
-      <label><input type="checkbox" id="optReset"> Start each row at 0</label>
-      <label><input type="checkbox" id="optAlt"> Switch between knit and purl each row</label>
+      <label><input type="checkbox" id="optAlt"> Switch between knit and purl after each row</label>
       <label><input type="checkbox" id="optWake"> Keep screen on</label>
     </div>
   </section>
@@ -180,55 +156,49 @@ h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
   <section>
     <h2>Controller buttons</h2>
     <table class="map" id="mapTable"></table>
-    <p class="hint" id="padHint">Press any button on the controller to connect it. If nothing happens, close and reopen the app, then press a button again.</p>
+    <p class="hint" id="padHint">Press any button on the controller to connect it. If nothing happens, close and reopen the app, then try again.</p>
     <p class="hint" id="lastInput">Last button pressed: none yet</p>
     <button class="reset" id="resetMap" style="margin-top:.5rem">Go back to the default buttons</button>
   </section>
 
   <section>
-    <h2>Finished rows</h2>
-    <p class="empty" id="emptyHist">Rows you finish show up here.</p>
+    <h2>Rows so far</h2>
+    <p class="summary" id="summary"></p>
+    <p class="empty" id="emptyHist">Rows you count show up here.</p>
     <ul class="history" id="history"></ul>
   </section>
 
-  <button class="reset" id="resetAll">Clear everything and start over</button>
+  <button class="reset" id="resetAll">Clear all rows and start over</button>
 </main>
 
 <script>
 (function(){
   const TYPES = ["knit","purl","increase","decrease"];
   const LABEL = {knit:"Knit",purl:"Purl",increase:"Increase",decrease:"Decrease"};
-  const KEY = "stitch-counter-v1";
-  const defaults = {count:0, step:1, type:"knit", row:1, resetEachRow:true, alternate:false, history:[]};
+  const KEY = "stitch-counter-rows-v1";
+  const defaults = {step:1, type:"knit", alternate:false, history:[]};
+  const $ = id => document.getElementById(id);
 
   let state = load();
   const undoStack = [];
 
   function load(){
-    try{
-      const raw = localStorage.getItem(KEY);
-      if(raw){ return Object.assign({}, defaults, JSON.parse(raw)); }
-    }catch(e){}
+    try{ const raw = localStorage.getItem(KEY); if(raw) return Object.assign({}, defaults, JSON.parse(raw)); }catch(e){}
     return Object.assign({}, defaults, {history:[]});
   }
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
-  function snapshot(){
-    undoStack.push(JSON.stringify(state));
-    if(undoStack.length > 100) undoStack.shift();
-  }
-
-  const $ = id => document.getElementById(id);
-  const countEl = $("count");
+  function snapshot(){ undoStack.push(JSON.stringify(state)); if(undoStack.length > 100) undoStack.shift(); }
 
   function render(bump){
+    const rows = state.history.length;
     document.documentElement.style.setProperty("--row", `var(--${state.type})`);
-    countEl.textContent = state.count;
+    const countEl = $("count");
+    countEl.textContent = rows;
     if(bump){ countEl.classList.remove("bump"); void countEl.offsetWidth; countEl.classList.add("bump"); }
-    $("unit").textContent = state.count === 1 ? "stitch" : "stitches";
-    $("rowNum").textContent = state.row;
+    $("unit").textContent = rows === 1 ? "row" : "rows";
     $("rowType").textContent = LABEL[state.type] + " row";
-    $("plusN").textContent = state.step;
-    $("minusN").textContent = state.step;
+    $("plusN").textContent = state.step === 1 ? "1 row" : state.step + " rows";
+    $("minusN").textContent = state.step === 1 ? "1 row" : state.step + " rows";
     $("undo").disabled = undoStack.length === 0;
 
     document.querySelectorAll("#types button").forEach(b => b.setAttribute("aria-pressed", b.dataset.type === state.type));
@@ -239,115 +209,91 @@ h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
     });
     const custom = $("customStep");
     if(document.activeElement !== custom) custom.value = preset ? "" : state.step;
-
-    $("optReset").checked = state.resetEachRow;
     $("optAlt").checked = state.alternate;
 
-    // stitch chain
-    const shown = Math.min(state.count, 60);
-    let html = "";
-    for(let i=0;i<shown;i++) html += '<svg viewBox="0 0 14 18"><path d="M2 3 L7 15 L12 3"/></svg>';
-    if(state.count > 60) html += `<span class="more">+${state.count - 60}</span>`;
+    // Recent rows as colored stitches, newest last
+    const recent = state.history.slice(-60);
+    let html = rows > 60 ? `<span class="more">+${rows - 60}</span>` : "";
+    for(const h of recent) html += `<svg viewBox="0 0 14 18"><path style="stroke:var(--${h.type})" d="M2 3 L7 15 L12 3"/></svg>`;
     $("chain").innerHTML = html;
 
-    // history
-    const list = $("history");
-    $("emptyHist").style.display = state.history.length ? "none" : "";
-    list.innerHTML = state.history.slice().reverse().map(h =>
-      `<li><span class="n">Row ${h.row}</span><span class="tag" style="color:var(--${h.type})">${LABEL[h.type]}</span><span class="n">${h.count} st</span></li>`
-    ).join("");
+    const totals = {knit:0,purl:0,increase:0,decrease:0};
+    state.history.forEach(h => totals[h.type]++);
+    $("summary").textContent = rows ? TYPES.filter(t => totals[t]).map(t => `${LABEL[t]}: ${totals[t]}`).join(", ") : "";
+    $("emptyHist").style.display = rows ? "none" : "";
+    $("history").innerHTML = state.history.slice(-40).reverse().map(h =>
+      `<li><span class="n">Row ${h.row}</span><span class="tag" style="color:var(--${h.type})">${LABEL[h.type]}</span></li>`).join("");
   }
 
   // Actions
-  function add(dir){
-    const next = Math.max(0, state.count + dir * state.step);
-    if(next === state.count) return;
-    snapshot(); state.count = next; save(); render(true);
-  }
-  function cycleType(dir){
+  function addRows(){
     snapshot();
-    const i = TYPES.indexOf(state.type);
-    state.type = TYPES[(i + dir + TYPES.length) % TYPES.length];
-    save(); render();
-  }
-  function setType(t){ if(t === state.type) return; snapshot(); state.type = t; save(); render(); }
-  function finishRow(){
-    snapshot();
-    state.history.push({row:state.row, type:state.type, count:state.count});
-    state.row += 1;
-    if(state.resetEachRow) state.count = 0;
-    if(state.alternate){
-      if(state.type === "knit") state.type = "purl";
-      else if(state.type === "purl") state.type = "knit";
+    for(let i = 0; i < state.step; i++){
+      state.history.push({row: state.history.length + 1, type: state.type});
+      if(state.alternate){
+        if(state.type === "knit") state.type = "purl";
+        else if(state.type === "purl") state.type = "knit";
+      }
     }
     save(); render(true); rumble();
   }
-  function undo(){
-    if(!undoStack.length) return;
-    state = JSON.parse(undoStack.pop()); save(); render(true);
+  function removeRows(){
+    if(!state.history.length) return;
+    snapshot();
+    let removed = null;
+    for(let i = 0; i < state.step && state.history.length; i++) removed = state.history.pop();
+    if(removed) state.type = removed.type; // you're back on that row, so it's up next again
+    save(); render(true);
   }
-  function setStep(n){
-    n = Math.round(Number(n));
-    if(!n || n < 1) return;
-    state.step = Math.min(999, n); save(); render();
-  }
+  function setType(t){ if(t === state.type) return; snapshot(); state.type = t; save(); render(); }
+  function undo(){ if(!undoStack.length) return; state = JSON.parse(undoStack.pop()); save(); render(true); }
+  function setStep(n){ n = Math.round(Number(n)); if(!n || n < 1) return; state.step = Math.min(99, n); save(); render(); }
 
-  // On-screen controls
-  $("plus").onclick = () => add(1);
-  $("minus").onclick = () => add(-1);
-  $("finish").onclick = finishRow;
+  $("plus").onclick = addRows;
+  $("minus").onclick = removeRows;
   $("undo").onclick = undo;
   document.querySelectorAll("#types button").forEach(b => b.onclick = () => setType(b.dataset.type));
   document.querySelectorAll("#stepSeg button").forEach(b => b.onclick = () => setStep(b.dataset.step));
   $("customStep").addEventListener("change", e => setStep(e.target.value));
-  $("optReset").onchange = e => { state.resetEachRow = e.target.checked; save(); };
   $("optAlt").onchange = e => { state.alternate = e.target.checked; save(); };
   $("resetAll").onclick = () => {
-    if(!confirm("Clear the count, row number and all finished rows?")) return;
+    if(!confirm("Clear all counted rows?")) return;
     snapshot();
-    state = Object.assign({}, defaults, {history:[], step:state.step, resetEachRow:state.resetEachRow, alternate:state.alternate});
+    state = Object.assign({}, defaults, {history:[], step:state.step, alternate:state.alternate});
     save(); render(true);
   };
 
   // Keep screen on
   let wakeLock = null;
-  async function requestWake(){
-    try{ if("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); }catch(e){ wakeLock = null; }
-  }
+  async function requestWake(){ try{ if("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); }catch(e){ wakeLock = null; } }
   $("optWake").onchange = async e => {
     if(e.target.checked){
       await requestWake();
-      if(!wakeLock){ e.target.checked = false; alert("This browser can't keep the screen on. Try changing the screen timeout in your phone settings."); }
+      if(!wakeLock){ e.target.checked = false; alert("This phone won't let the app keep the screen on. Try a longer screen timeout in your phone settings."); }
     } else if(wakeLock){ wakeLock.release(); wakeLock = null; }
   };
-  document.addEventListener("visibilitychange", () => {
-    if(document.visibilityState === "visible" && $("optWake").checked) requestWake();
-  });
+  document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible" && $("optWake").checked) requestWake(); });
 
-  // Controller
-  let padSeen = false;
+  // ----- Controller -----
+  let padSeen = false, activePad = null;
   const prev = {};
-  let activePad = null;
-
   function rumble(){
-    try{
-      if(activePad && activePad.vibrationActuator){
-        activePad.vibrationActuator.playEffect("dual-rumble",{duration:120, strongMagnitude:.6, weakMagnitude:.4});
-      }
-    }catch(e){}
+    try{ if(activePad && activePad.vibrationActuator)
+      activePad.vibrationActuator.playEffect("dual-rumble",{duration:100, strongMagnitude:.5, weakMagnitude:.3}); }catch(e){}
   }
 
-  // ----- Button remapping -----
   const ACTIONS = [
-    {id:"up",     label:"Add",              def:"D-pad up"},
-    {id:"down",   label:"Subtract",         def:"D-pad down"},
-    {id:"left",   label:"Previous row type", def:"D-pad left"},
-    {id:"right",  label:"Next row type",    def:"D-pad right"},
-    {id:"cross",  label:"Finish row",       def:"Cross (✕)"},
-    {id:"square", label:"Undo",             def:"Square (□)"}
+    {id:"rowUp",    label:"Add a row",       def:"D-pad up or R2",   idx:[12,7]},
+    {id:"rowDown",  label:"Take away a row", def:"D-pad down or L2", idx:[13,6]},
+    {id:"knit",     label:"Knit row",        def:"Square (□)",       idx:[2]},
+    {id:"purl",     label:"Purl row",        def:"Cross (✕)",        idx:[0]},
+    {id:"increase", label:"Increase row",    def:"Triangle (△)",     idx:[3]},
+    {id:"decrease", label:"Decrease row",    def:"Circle (○)",       idx:[1]}
   ];
+  const RUN = {rowUp:addRows, rowDown:removeRows, knit:()=>setType("knit"), purl:()=>setType("purl"),
+               increase:()=>setType("increase"), decrease:()=>setType("decrease")};
   const BTN_NAMES = ["Cross (✕)","Circle (○)","Square (□)","Triangle (△)","L1","R1","L2","R2","Share","Options","L3 (left stick click)","R3 (right stick click)","D-pad up","D-pad down","D-pad left","D-pad right","PS button","Touchpad"];
-  const MAP_KEY = "stitch-counter-buttons-v1";
+  const MAP_KEY = "stitch-counter-buttons-v2";
   let bindings = {};
   try{ bindings = JSON.parse(localStorage.getItem(MAP_KEY)) || {}; }catch(e){ bindings = {}; }
   function saveBindings(){ try{ localStorage.setItem(MAP_KEY, JSON.stringify(bindings)); }catch(e){} }
@@ -369,128 +315,106 @@ h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
   let listeningFor = null, listenBaseline = null, listenTimer = null;
   function renderMap(){
     $("mapTable").innerHTML = ACTIONS.map(a => {
-      const custom = describe(bindings[a.id]);
       const listening = listeningFor === a.id;
-      return `<tr><td>${a.label}</td><td class="bind">${listening ? "Press a button…" : (custom || a.def)}</td>` +
+      return `<tr><td>${a.label}</td><td class="bind">${listening ? "Press a button…" : (describe(bindings[a.id]) || a.def)}</td>` +
         `<td><button class="change${listening ? " listening" : ""}" data-action="${a.id}">${listening ? "Cancel" : "Change"}</button></td></tr>`;
     }).join("");
     document.querySelectorAll(".change").forEach(b => b.onclick = () => {
-      if(listeningFor === b.dataset.action) stopListening();
-      else startListening(b.dataset.action);
+      if(listeningFor === b.dataset.action) stopListening(); else startListening(b.dataset.action);
     });
   }
   function startListening(id){
     if(!padSeen){ alert("Connect the controller first by pressing any button on it."); return; }
     listeningFor = id; listenBaseline = null;
-    clearTimeout(listenTimer);
-    listenTimer = setTimeout(stopListening, 10000);
+    clearTimeout(listenTimer); listenTimer = setTimeout(stopListening, 10000);
     renderMap();
   }
   function stopListening(){ listeningFor = null; listenBaseline = null; clearTimeout(listenTimer); renderMap(); }
-
   function captureBinding(gp){
-    if(!listenBaseline){
-      // wait until nothing is held, then remember resting positions
-      if(gp.buttons.some(b => b.pressed)) return;
-      listenBaseline = gp.axes.slice(); return;
-    }
+    if(!listenBaseline){ if(gp.buttons.some(b => b.pressed)) return; listenBaseline = gp.axes.slice(); return; }
     const i = gp.buttons.findIndex(b => b.pressed);
     let bind = null;
     if(i >= 0) bind = {btn:i};
-    else {
-      for(let a = 0; a < gp.axes.length; a++){
-        const v = gp.axes[a], base = listenBaseline[a];
-        if(Math.abs(v) <= 1 && Math.abs(v - base) > 0.5){
-          bind = Math.abs(base) < 0.2 ? {axis:a, dir:Math.sign(v)} : {axis:a, value:v};
-          break;
-        }
-      }
+    else for(let a = 0; a < gp.axes.length; a++){
+      const v = gp.axes[a], base = listenBaseline[a];
+      if(Math.abs(v) <= 1 && Math.abs(v - base) > 0.5){ bind = Math.abs(base) < 0.2 ? {axis:a, dir:Math.sign(v)} : {axis:a, value:v}; break; }
     }
     if(!bind) return;
-    bindings[listeningFor] = bind; saveBindings();
-    stopListening();
-    // stop the assigning press from also triggering its new action
-    const held = readButtons(gp); Object.assign(prev, held);
+    bindings[listeningFor] = bind; saveBindings(); stopListening();
+    Object.assign(prev, readButtons(gp));
   }
   $("resetMap").onclick = () => { bindings = {}; saveBindings(); stopListening(); };
   renderMap();
 
+  function readDefaults(gp){
+    const b = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
+    const r = {};
+    for(const a of ACTIONS) r[a.id] = a.idx.some(b);
+    // D-pad reported as axes on some non-standard setups
+    const ax = gp.axes || [];
+    if(gp.mapping !== "standard"){
+      if(ax.length >= 8){ if(ax[7] < -0.5) r.rowUp = true; if(ax[7] > 0.5) r.rowDown = true; }
+      if(ax.length >= 10 && Math.abs(ax[9]) <= 1){
+        const h = ax[9];
+        if(Math.abs(h + 1) < 0.1 || Math.abs(h - 1) < 0.1) r.rowUp = true;
+        if(Math.abs(h - 0.14) < 0.1) r.rowDown = true;
+      }
+    }
+    return r;
+  }
   function readButtons(gp){
     const r = readDefaults(gp);
-    for(const a of ACTIONS){ if(bindings[a.id]) r[a.id] = bindPressed(gp, bindings[a.id]); }
+    for(const a of ACTIONS) if(bindings[a.id]) r[a.id] = bindPressed(gp, bindings[a.id]);
     return r;
   }
 
+  let lastShown = -1;
   function showLastInput(gp){
     const i = gp.buttons.findIndex(b => b.pressed);
-    if(i >= 0 && i !== lastShown){ lastShown = i; $("lastInput").textContent = `Last button pressed: ${BTN_NAMES[i] || "Button " + i}`; }
-    if(i < 0) lastShown = -1;
-  }
-  let lastShown = -1;
-
-  function readDefaults(gp){
-    const b = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
-    let up=false, down=false, left=false, right=false;
-    if(gp.mapping === "standard" || gp.buttons.length > 15){
-      up=b(12); down=b(13); left=b(14); right=b(15);
-    }
-    // Fallbacks for non-standard mappings (d-pad reported as axes)
-    const a = gp.axes || [];
-    if(a.length >= 8){
-      if(a[7] < -0.5) up=true; if(a[7] > 0.5) down=true;
-      if(a[6] < -0.5) left=true; if(a[6] > 0.5) right=true;
-    }
-    if(a.length >= 10 && Math.abs(a[9]) <= 1){
-      const h = a[9];
-      if(Math.abs(h + 1) < 0.1 || Math.abs(h - 1) < 0.1) up=true;   // up, up-left
-      if(Math.abs(h - 0.14) < 0.1) down=true;
-      if(Math.abs(h + 0.43) < 0.1) right=true;
-      if(Math.abs(h - 0.71) < 0.1) left=true;
-    }
-    return {up, down, left, right, cross:b(0), square:b(2)};
+    if(i >= 0 && i !== lastShown) $("lastInput").textContent = `Last button pressed: ${BTN_NAMES[i] || "Button " + i}`;
+    lastShown = i;
   }
 
   function poll(){
-    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    let pads = [];
+    try{ pads = navigator.getGamepads ? navigator.getGamepads() : []; }
+    catch(e){
+      // This screen isn't allowed to use controllers (e.g. a preview window)
+      $("padText").textContent = "Controller blocked here";
+      $("padHint").textContent = "This window can't use a controller. Open the Stitch Counter app on your phone instead.";
+      return;
+    }
     let gp = null;
     for(const p of pads){ if(p && p.connected){ gp = p; break; } }
     activePad = gp;
-    const connected = !!gp;
-    if(connected !== padSeen){
-      padSeen = connected;
-      $("pad").classList.toggle("on", connected);
-      $("padText").textContent = connected ? "Controller connected" : "No controller";
-      $("padHint").style.display = connected ? "none" : "";
+    if(!!gp !== padSeen){
+      padSeen = !!gp;
+      $("pad").classList.toggle("on", padSeen);
+      $("padText").textContent = padSeen ? "Controller connected" : "No controller";
+      $("padHint").style.display = padSeen ? "none" : "";
     }
     if(gp){
       showLastInput(gp);
-      if(listeningFor){ captureBinding(gp); requestAnimationFrame(poll); return; }
-      const now = readButtons(gp);
-      const pressed = k => now[k] && !prev[k];
-      if(pressed("up")) add(1);
-      if(pressed("down")) add(-1);
-      if(pressed("left")) cycleType(-1);
-      if(pressed("right")) cycleType(1);
-      if(pressed("cross")) finishRow();
-      if(pressed("square")) undo();
-      Object.assign(prev, now);
+      if(listeningFor){ captureBinding(gp); }
+      else {
+        const now = readButtons(gp);
+        for(const a of ACTIONS) if(now[a.id] && !prev[a.id]) RUN[a.id]();
+        Object.assign(prev, now);
+      }
     }
     requestAnimationFrame(poll);
   }
-  window.addEventListener("gamepadconnected", () => {});
   requestAnimationFrame(poll);
 
-  // Some phones send the d-pad as arrow keys instead; only use these when no gamepad is seen
-  document.addEventListener("click", e => {
-    const b = e.target.closest && e.target.closest("button");
-    if(b) setTimeout(() => b.blur(), 0);
-  });
+  // Tapped buttons shouldn't keep focus (a controller press could "click" them)
+  document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("button"); if(b) setTimeout(() => b.blur(), 0); });
+  // Arrow-key fallback when no controller is detected
   document.addEventListener("keydown", e => {
     if(e.target && e.target.tagName === "INPUT") return;
-    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter"," "].includes(e.key) || e.key.startsWith("Gamepad")) e.preventDefault();
+    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter"," "].includes(e.key)) e.preventDefault();
     if(padSeen) return;
-    const map = {ArrowUp:()=>add(1), ArrowDown:()=>add(-1), ArrowLeft:()=>cycleType(-1), ArrowRight:()=>cycleType(1)};
-    if(map[e.key]){ e.preventDefault(); map[e.key](); }
+    if(e.key === "ArrowUp") addRows();
+    if(e.key === "ArrowDown") removeRows();
   });
 
   render();
