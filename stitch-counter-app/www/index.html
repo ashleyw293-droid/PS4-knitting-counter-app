@@ -1,178 +1,551 @@
-name: Build Android app
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stitch Counter</title>
+<style>
+:root{
+  --bg:#E6EAEE; --surface:#F6F8FA; --ink:#1D2733; --muted:#5E6B78; --line:#C9D1D9;
+  --knit:#4F8A62; --purl:#4468A3; --increase:#B07D12; --decrease:#9A4468;
+  --row:var(--knit);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#151B22; --surface:#1E2630; --ink:#E9EEF3; --muted:#9AA7B4; --line:#33404D;
+    --knit:#7DBE91; --purl:#86A7DE; --increase:#E0B04A; --decrease:#D987A9;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#151B22; --surface:#1E2630; --ink:#E9EEF3; --muted:#9AA7B4; --line:#33404D;
+  --knit:#7DBE91; --purl:#86A7DE; --increase:#E0B04A; --decrease:#D987A9;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0; background:var(--bg); color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:16px; line-height:1.45; -webkit-tap-highlight-color:transparent}
+main{max-width:34rem; margin:0 auto; padding:1rem 1rem 2.5rem}
+button{font:inherit; color:inherit; cursor:pointer}
+button:focus-visible{outline:3px solid var(--row); outline-offset:2px}
 
-on:
-  workflow_dispatch:
-  push:
-    branches: [main]
+.topbar{display:flex; justify-content:space-between; align-items:center; gap:.75rem; margin-bottom:.75rem}
+h1{font-size:1.15rem; font-weight:800; margin:0; letter-spacing:-.01em}
+.pad{display:flex; align-items:center; gap:.45rem; font-size:.85rem; color:var(--muted)}
+.dot{width:.6rem; height:.6rem; border-radius:50%; background:var(--line); flex:none}
+.pad.on .dot{background:var(--knit)}
+.pad.on{color:var(--ink)}
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: stitch-counter-app
-    steps:
-      - uses: actions/checkout@v5
+.projects{display:flex; gap:.5rem; margin-bottom:.75rem}
+.projects select{flex:1; min-width:0; font:inherit; font-weight:600; color:var(--ink); background:var(--surface);
+  border:1.5px solid var(--line); border-radius:.75rem; padding:.55rem .7rem}
+.small{border:1.5px solid var(--line); background:var(--surface); border-radius:.75rem; padding:.5rem .9rem; white-space:nowrap}
+.projrow{display:flex; gap:.5rem}
+.projrow input{flex:1; min-width:0; font:inherit; color:var(--ink); background:var(--surface);
+  border:1.5px solid var(--line); border-radius:.75rem; padding:.5rem .7rem}
+.danger{color:var(--decrease)}
+.counter{background:var(--surface); border-radius:1.5rem; padding:1.25rem 1.25rem 1rem;
+  border:2px solid var(--row); transition:border-color .2s}
+.rowline{display:flex; justify-content:space-between; align-items:baseline; font-size:.95rem; color:var(--muted)}
+.rowline strong{color:var(--row); font-weight:800; font-size:1.05rem}
+.big{font-size:clamp(5.5rem,30vw,9.5rem); font-weight:800; line-height:.95; text-align:center;
+  margin:.4rem 0 .2rem; font-variant-numeric:tabular-nums; letter-spacing:-.04em}
+.big.bump{animation:bump .18s ease-out}
+@keyframes bump{from{transform:scale(1.06)}to{transform:scale(1)}}
+.unit{text-align:center; color:var(--muted); font-size:.95rem}
+.unit.done{color:var(--row); font-weight:700}
+.total{text-align:center; color:var(--muted); font-size:.85rem; min-height:1.2rem; margin:.15rem 0 .9rem}
+.goalrow{display:flex; align-items:center; gap:.6rem}
+.goalrow input{width:5.5rem; font:inherit; color:var(--ink); background:var(--surface);
+  border:1.5px solid var(--line); border-radius:.75rem; padding:.5rem .7rem}
+.history li.sec{display:block; color:var(--muted); font-size:.82rem; padding:.35rem 0}
 
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
 
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 21
+.steps{display:grid; grid-template-columns:1fr 1fr; gap:.6rem}
+.stepbtn{border:0; border-radius:1rem; padding:1rem .5rem; font-size:1.3rem; font-weight:800;
+  background:var(--bg); display:flex; align-items:center; justify-content:center; gap:.4rem}
+.stepbtn:active{background:var(--line)}
 
-      - uses: android-actions/setup-android@v3
-        with:
-          packages: platform-tools
+section{margin-top:1.25rem}
+h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
+.seg{display:flex; flex-wrap:wrap; gap:.4rem}
+.seg button{border:1.5px solid var(--line); background:var(--surface); border-radius:999px;
+  padding:.45rem .9rem; min-width:2.75rem}
+.seg button[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.types button[data-type="knit"][aria-pressed="true"]{background:var(--knit); border-color:var(--knit); color:#fff}
+.types button[data-type="purl"][aria-pressed="true"]{background:var(--purl); border-color:var(--purl); color:#fff}
+.types button[data-type="increase"][aria-pressed="true"]{background:var(--increase); border-color:var(--increase); color:#fff}
+.types button[data-type="decrease"][aria-pressed="true"]{background:var(--decrease); border-color:var(--decrease); color:#fff}
+.seg input{width:4.5rem; border:1.5px solid var(--line); background:var(--surface); color:var(--ink);
+  border-radius:999px; padding:.45rem .75rem; font:inherit}
 
-      - name: Install
-        run: npm install
+.actions{margin-top:1.25rem}
+.secondary{width:100%; border:1.5px solid var(--line); background:var(--surface); border-radius:1rem; padding:.8rem}
+.secondary:disabled{opacity:.45; cursor:default}
 
-      - name: Create Android project
-        run: npx cap add android
+.toggles{display:flex; flex-direction:column; gap:.55rem}
+.toggles label{display:flex; align-items:center; gap:.6rem}
+.toggles input{width:1.15rem; height:1.15rem; accent-color:var(--row)}
 
-      - name: Controller support
-        run: |
-          cat > android/app/src/main/java/com/stitchcounter/app/MainActivity.java <<'EOF'
-          package com.stitchcounter.app;
+.summary{margin:0 0 .6rem; font-size:.92rem}
+.history{list-style:none; margin:0; padding:0; border-top:1px solid var(--line)}
+.history li{display:grid; grid-template-columns:4.5rem 1fr; gap:.5rem; padding:.5rem 0; border-bottom:1px solid var(--line)}
+.history .tag{font-weight:600}
+.history .n{font-variant-numeric:tabular-nums; color:var(--muted)}
+.empty{color:var(--muted); font-size:.92rem; margin:0}
 
-          import android.view.InputDevice;
-          import android.view.KeyEvent;
-          import android.view.MotionEvent;
-          import android.webkit.WebView;
-          import com.getcapacitor.BridgeActivity;
+.map{width:100%; border-collapse:collapse; font-size:.92rem}
+.map td{padding:.35rem 0; border-bottom:1px solid var(--line)}
+.map td:first-child{color:var(--muted); width:40%}
+.map td:last-child{text-align:right; width:6.5rem}
+.map .bind{font-weight:600}
+.change{border:1.5px solid var(--line); background:var(--surface); border-radius:999px; padding:.3rem .8rem; font-size:.88rem}
+.change.listening{background:var(--row); border-color:var(--row); color:#fff}
+.hint{font-size:.85rem; color:var(--muted); margin:.6rem 0 0}
+.reset{margin-top:1.5rem; background:none; border:0; color:var(--decrease); text-decoration:underline; padding:.25rem 0}
 
-          public class MainActivity extends BridgeActivity {
-              private int hatX = 0;
-              private int hatY = 0;
+@media (prefers-reduced-motion:reduce){.big.bump{animation:none}*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <div class="topbar">
+    <h1>Stitch Counter</h1>
+    <div class="pad" id="pad" role="status" aria-live="polite"><span class="dot"></span><span id="padText">No controller</span></div>
+  </div>
 
-              private void send(String name, boolean down, String raw) {
-                  if (bridge == null) return;
-                  final WebView wv = bridge.getWebView();
-                  if (wv == null) return;
-                  final String js = "window.nativePad && window.nativePad('" + name + "'," + down + ",'" + raw + "')";
-                  wv.post(() -> wv.evaluateJavascript(js, null));
-              }
+  <div class="projects">
+    <select id="projSelect" aria-label="Project"></select>
+    <button class="small" id="projNew">New project</button>
+  </div>
 
-              private String keyName(int code) {
-                  switch (code) {
-                      case KeyEvent.KEYCODE_DPAD_UP: return "up";
-                      case KeyEvent.KEYCODE_DPAD_DOWN: return "down";
-                      case KeyEvent.KEYCODE_DPAD_LEFT: return "left";
-                      case KeyEvent.KEYCODE_DPAD_RIGHT: return "right";
-                      case KeyEvent.KEYCODE_BUTTON_A: return "cross";
-                      case KeyEvent.KEYCODE_BUTTON_B: return "circle";
-                      case KeyEvent.KEYCODE_BUTTON_X: return "square";
-                      case KeyEvent.KEYCODE_BUTTON_Y: return "triangle";
-                      case KeyEvent.KEYCODE_BUTTON_L1: return "l1";
-                      case KeyEvent.KEYCODE_BUTTON_R1: return "r1";
-                      case KeyEvent.KEYCODE_BUTTON_L2: return "l2";
-                      case KeyEvent.KEYCODE_BUTTON_R2: return "r2";
-                      case KeyEvent.KEYCODE_BUTTON_SELECT: return "share";
-                      case KeyEvent.KEYCODE_BUTTON_START: return "options";
-                      case KeyEvent.KEYCODE_BUTTON_THUMBL: return "l3";
-                      case KeyEvent.KEYCODE_BUTTON_THUMBR: return "r3";
-                      case KeyEvent.KEYCODE_BUTTON_MODE: return "ps";
-                      default: return null;
-                  }
-              }
+  <div class="counter">
+    <div class="rowline"><span>Up next</span><strong id="rowType">Knit row</strong></div>
+    <div class="big" id="count" aria-live="polite">0</div>
+    <div class="unit" id="unit">rows</div>
+    <div class="total" id="total"></div>
+    <div class="steps">
+      <button class="stepbtn" id="minus">− <span id="minusN">1</span></button>
+      <button class="stepbtn" id="plus">+ <span id="plusN">1</span></button>
+    </div>
+  </div>
 
-              @Override
-              public boolean dispatchKeyEvent(KeyEvent event) {
-                  int code = event.getKeyCode();
-                  String name = keyName(code);
-                  if (name == null && KeyEvent.isGamepadButton(code)) name = "key" + code;
-                  if (name != null) {
-                      String raw = KeyEvent.keyCodeToString(code).replace("KEYCODE_", "");
-                      if (event.getRepeatCount() == 0) {
-                          if (event.getAction() == KeyEvent.ACTION_DOWN) send(name, true, raw);
-                          else if (event.getAction() == KeyEvent.ACTION_UP) send(name, false, raw);
-                      }
-                      return true;
-                  }
-                  return super.dispatchKeyEvent(event);
-              }
+  <section>
+    <h2>Next row type</h2>
+    <div class="seg types" id="types">
+      <button data-type="knit">Knit</button>
+      <button data-type="purl">Purl</button>
+      <button data-type="increase">Increase</button>
+      <button data-type="decrease">Decrease</button>
+    </div>
+  </section>
 
-              @Override
-              public boolean dispatchGenericMotionEvent(MotionEvent event) {
-                  if ((event.getSource() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0
-                          && event.getAction() == MotionEvent.ACTION_MOVE) {
-                      int x = Math.round(event.getAxisValue(MotionEvent.AXIS_HAT_X));
-                      int y = Math.round(event.getAxisValue(MotionEvent.AXIS_HAT_Y));
-                      if (x != hatX) {
-                          if (hatX == -1) send("left", false, "HAT_LEFT");
-                          if (hatX == 1) send("right", false, "HAT_RIGHT");
-                          if (x == -1) send("left", true, "HAT_LEFT");
-                          if (x == 1) send("right", true, "HAT_RIGHT");
-                          hatX = x;
-                      }
-                      if (y != hatY) {
-                          if (hatY == -1) send("up", false, "HAT_UP");
-                          if (hatY == 1) send("down", false, "HAT_DOWN");
-                          if (y == -1) send("up", true, "HAT_UP");
-                          if (y == 1) send("down", true, "HAT_DOWN");
-                          hatY = y;
-                      }
-                      return true;
-                  }
-                  return super.dispatchGenericMotionEvent(event);
-              }
-          }
-          EOF
-          cat > www/native-pad.js <<'EOF'
-          (function () {
-            var IDX = {cross:0, circle:1, square:2, triangle:3, l1:4, r1:5, l2:6, r2:7,
-                       share:8, options:9, l3:10, r3:11, up:12, down:13, left:14, right:15, ps:16};
-            var next = 17;
-            var buttons = [];
-            function ensure(n) { while (buttons.length <= n) buttons.push({pressed:false, touched:false, value:0}); }
-            ensure(16);
-            window.padButtonNames = {};
-            window.padRawNames = {};
-            var pad = {id:"Controller", index:0, connected:true, mapping:"standard",
-                       axes:[0,0,0,0], buttons:buttons, timestamp:0};
-            var active = false;
-            function useNative() {
-              if (active) return;
-              active = true;
-              var fn = function () { return [pad]; };
-              try { Object.defineProperty(navigator, "getGamepads", {configurable:true, value:fn}); }
-              catch (e) { navigator.getGamepads = fn; }
-            }
-            window.nativePad = function (name, down, raw) {
-              var i = IDX[name];
-              if (i === undefined) {
-                i = next++; IDX[name] = i; ensure(i);
-                window.padButtonNames[i] = "Button " + (raw || name);
-              }
-              if (raw) window.padRawNames[i] = raw;
-              useNative();
-              pad.timestamp = performance.now();
-              if (down) { buttons[i].pressed = true; buttons[i].value = 1; }
-              else setTimeout(function () { buttons[i].pressed = false; buttons[i].value = 0; }, 50);
-            };
-          })();
-          EOF
-          sed -i '0,/<script>/s//<script src="native-pad.js"><\/script>\n<script>/' www/index.html
-          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.VIBRATE" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
+  <div class="actions" style="display:grid; grid-template-columns:1fr 1fr; gap:.6rem">
+    <button class="secondary" id="newSection">Start new section</button>
+    <button class="secondary" id="undo" disabled>Undo last change</button>
+  </div>
 
-      - name: App icon
-        continue-on-error: true
-        run: npx capacitor-assets generate --android
+  <section>
+    <h2>Row goal</h2>
+    <div class="goalrow">
+      <input id="goal" type="number" min="0" max="9999" inputmode="numeric" placeholder="None" aria-label="Row goal">
+      <span class="hint" style="margin:0">rows per section (leave empty for no goal)</span>
+    </div>
+  </section>
 
-      - name: Copy app files
-        run: npx cap sync android
+  <section>
+    <h2>Count rows by</h2>
+    <div class="seg" id="stepSeg">
+      <button data-step="1">1</button>
+      <button data-step="2">2</button>
+      <button data-step="3">3</button>
+      <button data-step="4">4</button>
+      <input id="customStep" type="number" min="1" max="99" inputmode="numeric" placeholder="Other" aria-label="Custom step">
+    </div>
+  </section>
 
-      - name: Build app file
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
+  <section>
+    <h2>Project name</h2>
+    <div class="projrow">
+      <input id="projName" type="text" maxlength="40" aria-label="Project name">
+      <button class="small danger" id="projDelete">Delete project</button>
+    </div>
+  </section>
 
-      - name: Save app file
-        uses: actions/upload-artifact@v4
-        with:
-          name: stitch-counter-app
-          path: stitch-counter-app/android/app/build/outputs/apk/debug/app-debug.apk
+  <section>
+    <h2>Options</h2>
+    <div class="toggles">
+      <label><input type="checkbox" id="optAlt"> Switch between knit and purl after each row</label>
+      <label><input type="checkbox" id="optWake"> Keep screen on</label>
+    </div>
+  </section>
+
+  <section>
+    <h2>Controller buttons</h2>
+    <table class="map" id="mapTable"></table>
+    <p class="hint" id="padHint">Press any button on the controller to connect it. If nothing happens, close and reopen the app, then try again.</p>
+    <p class="hint" id="lastInput">Last button pressed: none yet</p>
+    <button class="reset" id="resetMap" style="margin-top:.5rem">Go back to the default buttons</button>
+  </section>
+
+  <section>
+    <h2>Rows so far</h2>
+    <p class="summary" id="summary"></p>
+    <p class="empty" id="emptyHist">Rows you count show up here.</p>
+    <ul class="history" id="history"></ul>
+  </section>
+
+  <button class="reset" id="resetAll">Clear this project&rsquo;s rows</button>
+</main>
+
+<script>
+(function(){
+  const TYPES = ["knit","purl","increase","decrease"];
+  const LABEL = {knit:"Knit",purl:"Purl",increase:"Increase",decrease:"Decrease"};
+  const KEY = "stitch-counter-projects-v1";
+  const OLD_KEY = "stitch-counter-rows-v1";
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  const newProject = name => ({id:newId(), name, type:"knit", history:[], sections:[0], goal:0});
+
+  let state = load();
+  const undoStack = [];
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(raw){ const s = JSON.parse(raw); if(s.projects && s.projects.length) return s; }
+      const old = localStorage.getItem(OLD_KEY);
+      if(old){
+        const o = JSON.parse(old);
+        const p = {id:newId(), name:"My project", type:o.type || "knit", history:o.history || []};
+        return {step:o.step || 1, alternate:!!o.alternate, projects:[p], currentId:p.id};
+      }
+    }catch(e){}
+    const p = newProject("My project");
+    return {step:1, alternate:false, projects:[p], currentId:p.id};
+  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+  function snapshot(){ undoStack.push(JSON.stringify(state)); if(undoStack.length > 100) undoStack.shift(); }
+  function cur(){
+    let p = state.projects.find(x => x.id === state.currentId);
+    if(!p){ p = state.projects[0]; state.currentId = p.id; }
+    if(!p.sections || !p.sections.length) p.sections = [0];
+    if(p.goal === undefined) p.goal = 0;
+    return p;
+  }
+
+  const secStart = p => p.sections[p.sections.length - 1];
+  function render(bump){
+    const p = cur();
+    const rows = p.history.length;
+    const inSection = rows - secStart(p);
+    document.documentElement.style.setProperty("--row", `var(--${p.type})`);
+    const countEl = $("count");
+    countEl.textContent = inSection;
+    if(bump){ countEl.classList.remove("bump"); void countEl.offsetWidth; countEl.classList.add("bump"); }
+    const unit = $("unit");
+    if(p.goal){
+      unit.textContent = inSection >= p.goal ? `of ${p.goal} rows, goal reached` : `of ${p.goal} rows`;
+      unit.classList.toggle("done", inSection >= p.goal);
+    } else { unit.textContent = inSection === 1 ? "row" : "rows"; unit.classList.remove("done"); }
+    $("total").textContent = p.sections.length > 1 ? `Section ${p.sections.length}, ${rows} rows total` : "";
+    if(document.activeElement !== $("goal")) $("goal").value = p.goal || "";
+    $("rowType").textContent = LABEL[p.type] + " row";
+    $("plusN").textContent = state.step === 1 ? "1 row" : state.step + " rows";
+    $("minusN").textContent = state.step === 1 ? "1 row" : state.step + " rows";
+    $("undo").disabled = undoStack.length === 0;
+
+    $("projSelect").innerHTML = state.projects.map(x =>
+      `<option value="${x.id}"${x.id === p.id ? " selected" : ""}>${esc(x.name)} (${x.history.length})</option>`).join("");
+    if(document.activeElement !== $("projName")) $("projName").value = p.name;
+
+    document.querySelectorAll("#types button").forEach(b => b.setAttribute("aria-pressed", b.dataset.type === p.type));
+    let preset = false;
+    document.querySelectorAll("#stepSeg button").forEach(b => {
+      const on = Number(b.dataset.step) === state.step; if(on) preset = true;
+      b.setAttribute("aria-pressed", on);
+    });
+    const custom = $("customStep");
+    if(document.activeElement !== custom) custom.value = preset ? "" : state.step;
+    $("optAlt").checked = state.alternate;
+
+
+    const totals = {knit:0,purl:0,increase:0,decrease:0};
+    p.history.forEach(r => totals[r.type]++);
+    $("summary").textContent = rows ? TYPES.filter(t => totals[t]).map(t => `${LABEL[t]}: ${totals[t]}`).join(", ") : "";
+    $("emptyHist").style.display = rows ? "none" : "";
+    const first = Math.max(0, rows - 40);
+    let items = "";
+    for(let i = rows - 1; i >= first; i--){
+      const r = p.history[i];
+      items += `<li><span class="n">Row ${r.row}</span><span class="tag" style="color:var(--${r.type})">${LABEL[r.type]}</span></li>`;
+      const s = p.sections.indexOf(i);
+      if(s > 0) items += `<li class="sec">Section ${s + 1} starts above</li>`;
+    }
+    $("history").innerHTML = items;
+  }
+
+  // Row actions
+  function addRows(){
+    const p = cur(); snapshot();
+    for(let i = 0; i < state.step; i++){
+      p.history.push({row: p.history.length + 1, type: p.type});
+      if(state.alternate){
+        if(p.type === "knit") p.type = "purl";
+        else if(p.type === "purl") p.type = "knit";
+      }
+    }
+    save(); render(true);
+    const done = p.goal && (p.history.length - secStart(p)) >= p.goal && (p.history.length - state.step - secStart(p)) < p.goal;
+    rumble(done ? 600 : 100);
+  }
+  function removeRows(){
+    const p = cur(); if(p.history.length <= secStart(p)) return;
+    snapshot();
+    let removed = null;
+    for(let i = 0; i < state.step && p.history.length > secStart(p); i++) removed = p.history.pop();
+    if(removed) p.type = removed.type; // you're back on that row, so it's up next again
+    save(); render(true);
+  }
+  function setType(t){ const p = cur(); if(t === p.type) return; snapshot(); p.type = t; save(); render(); }
+  function undo(){ if(!undoStack.length) return; state = JSON.parse(undoStack.pop()); save(); render(true); }
+  function setStep(n){ n = Math.round(Number(n)); if(!n || n < 1) return; state.step = Math.min(99, n); save(); render(); }
+
+  function newSection(){
+    const p = cur();
+    if(p.history.length === secStart(p)) return; // already at 0
+    snapshot(); p.sections.push(p.history.length); save(); render(true); rumble(100);
+  }
+  function setGoal(v){
+    const p = cur(); const n = Math.max(0, Math.round(Number(v) || 0));
+    if(n === p.goal) return; snapshot(); p.goal = n; save(); render();
+  }
+
+  // Project actions
+  function switchProject(id){ if(id === state.currentId) return; state.currentId = id; save(); render(true); }
+  function cycleProject(dir){
+    if(state.projects.length < 2) return;
+    const i = state.projects.findIndex(x => x.id === state.currentId);
+    switchProject(state.projects[(i + dir + state.projects.length) % state.projects.length].id);
+    rumble();
+  }
+  function addProject(){
+    snapshot();
+    const p = newProject("Project " + (state.projects.length + 1));
+    state.projects.push(p); state.currentId = p.id;
+    save(); render(true);
+    const input = $("projName"); input.focus(); input.select();
+  }
+  function renameProject(name){
+    name = name.trim(); const p = cur();
+    if(!name || name === p.name){ render(); return; }
+    snapshot(); p.name = name; save(); render();
+  }
+  function deleteProject(){
+    const p = cur();
+    if(!confirm(`Delete "${p.name}" and all its rows?`)) return;
+    snapshot();
+    state.projects = state.projects.filter(x => x.id !== p.id);
+    if(!state.projects.length) state.projects.push(newProject("My project"));
+    state.currentId = state.projects[0].id;
+    save(); render(true);
+  }
+
+  $("plus").onclick = addRows;
+  $("minus").onclick = removeRows;
+  $("undo").onclick = undo;
+  $("newSection").onclick = newSection;
+  $("goal").addEventListener("change", e => setGoal(e.target.value));
+  $("goal").addEventListener("keydown", e => { if(e.key === "Enter") e.target.blur(); });
+  $("projSelect").onchange = e => switchProject(e.target.value);
+  $("projNew").onclick = addProject;
+  $("projName").addEventListener("change", e => renameProject(e.target.value));
+  $("projName").addEventListener("keydown", e => { if(e.key === "Enter") e.target.blur(); });
+  $("projDelete").onclick = deleteProject;
+  document.querySelectorAll("#types button").forEach(b => b.onclick = () => setType(b.dataset.type));
+  document.querySelectorAll("#stepSeg button").forEach(b => b.onclick = () => setStep(b.dataset.step));
+  $("customStep").addEventListener("change", e => setStep(e.target.value));
+  $("optAlt").onchange = e => { state.alternate = e.target.checked; save(); };
+  $("resetAll").onclick = () => {
+    const p = cur();
+    if(!confirm(`Clear all rows and sections in "${p.name}"?`)) return;
+    snapshot(); p.history = []; p.sections = [0]; p.type = "knit"; save(); render(true);
+  };
+
+  // Keep screen on
+  let wakeLock = null;
+  async function requestWake(){ try{ if("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); }catch(e){ wakeLock = null; } }
+  $("optWake").onchange = async e => {
+    if(e.target.checked){
+      await requestWake();
+      if(!wakeLock){ e.target.checked = false; alert("This phone won't let the app keep the screen on. Try a longer screen timeout in your phone settings."); }
+    } else if(wakeLock){ wakeLock.release(); wakeLock = null; }
+  };
+  document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible" && $("optWake").checked) requestWake(); });
+
+  // ----- Controller -----
+  let padSeen = false, activePad = null;
+  const prev = {};
+  function rumble(ms){
+    ms = ms || 100;
+    try{ if(activePad && activePad.vibrationActuator)
+      activePad.vibrationActuator.playEffect("dual-rumble",{duration:ms, strongMagnitude:.6, weakMagnitude:.4}); }catch(e){}
+    try{ if(ms > 200 && navigator.vibrate) navigator.vibrate(ms); }catch(e){}
+  }
+
+  const ACTIONS = [
+    {id:"rowUp",    label:"Add a row",       def:"D-pad up or R2",   idx:[12,7]},
+    {id:"rowDown",  label:"Take away a row", def:"D-pad down or L2", idx:[13,6]},
+    {id:"knit",     label:"Knit row",        def:"Square (□)",       idx:[2]},
+    {id:"purl",     label:"Purl row",        def:"Cross (✕)",        idx:[0]},
+    {id:"increase", label:"Increase row",    def:"Triangle (△)",     idx:[3]},
+    {id:"decrease", label:"Decrease row",    def:"Circle (○)",       idx:[1]},
+    {id:"section",  label:"Start new section", def:"Options",        idx:[9]},
+    {id:"prevProj", label:"Previous project", def:"L1",              idx:[4]},
+    {id:"nextProj", label:"Next project",    def:"R1",               idx:[5]}
+  ];
+  const RUN = {rowUp:addRows, rowDown:removeRows, knit:()=>setType("knit"), purl:()=>setType("purl"),
+               increase:()=>setType("increase"), decrease:()=>setType("decrease"),
+               section:newSection, prevProj:()=>cycleProject(-1), nextProj:()=>cycleProject(1)};
+  const BTN_NAMES = ["Cross (✕)","Circle (○)","Square (□)","Triangle (△)","L1","R1","L2","R2","Share","Options","L3 (left stick click)","R3 (right stick click)","D-pad up","D-pad down","D-pad left","D-pad right","PS button","Touchpad"];
+  const MAP_KEY = "stitch-counter-buttons-v2";
+  let bindings = {};
+  try{ bindings = JSON.parse(localStorage.getItem(MAP_KEY)) || {}; }catch(e){ bindings = {}; }
+  function saveBindings(){ try{ localStorage.setItem(MAP_KEY, JSON.stringify(bindings)); }catch(e){} }
+
+  const btnName = i => (window.padButtonNames && window.padButtonNames[i]) || BTN_NAMES[i] || `Button ${i}`;
+  function describe(bind){
+    if(!bind) return null;
+    if(bind.btn !== undefined) return btnName(bind.btn);
+    if(bind.dir !== undefined) return `Stick/axis ${bind.axis} ${bind.dir > 0 ? "+" : "−"}`;
+    return `Axis ${bind.axis} (${bind.value.toFixed(2)})`;
+  }
+  function bindPressed(gp, bind){
+    if(bind.btn !== undefined) return !!(gp.buttons[bind.btn] && gp.buttons[bind.btn].pressed);
+    const v = gp.axes[bind.axis];
+    if(v === undefined) return false;
+    if(bind.dir !== undefined) return Math.sign(v) === bind.dir && Math.abs(v) > 0.5;
+    return Math.abs(v - bind.value) < 0.1;
+  }
+
+  let listeningFor = null, listenBaseline = null, listenTimer = null;
+  function renderMap(){
+    $("mapTable").innerHTML = ACTIONS.map(a => {
+      const listening = listeningFor === a.id;
+      return `<tr><td>${a.label}</td><td class="bind">${listening ? "Press a button…" : (describe(bindings[a.id]) || a.def)}</td>` +
+        `<td><button class="change${listening ? " listening" : ""}" data-action="${a.id}">${listening ? "Cancel" : "Change"}</button></td></tr>`;
+    }).join("");
+    document.querySelectorAll(".change").forEach(b => b.onclick = () => {
+      if(listeningFor === b.dataset.action) stopListening(); else startListening(b.dataset.action);
+    });
+  }
+  function startListening(id){
+    if(!padSeen){ alert("Connect the controller first by pressing any button on it."); return; }
+    listeningFor = id; listenBaseline = null;
+    clearTimeout(listenTimer); listenTimer = setTimeout(stopListening, 10000);
+    renderMap();
+  }
+  function stopListening(){ listeningFor = null; listenBaseline = null; clearTimeout(listenTimer); renderMap(); }
+  function captureBinding(gp){
+    if(!listenBaseline){ if(gp.buttons.some(b => b.pressed)) return; listenBaseline = gp.axes.slice(); return; }
+    const i = gp.buttons.findIndex(b => b.pressed);
+    let bind = null;
+    if(i >= 0) bind = {btn:i};
+    else for(let a = 0; a < gp.axes.length; a++){
+      const v = gp.axes[a], base = listenBaseline[a];
+      if(Math.abs(v) <= 1 && Math.abs(v - base) > 0.5){ bind = Math.abs(base) < 0.2 ? {axis:a, dir:Math.sign(v)} : {axis:a, value:v}; break; }
+    }
+    if(!bind) return;
+    bindings[listeningFor] = bind; saveBindings(); stopListening();
+    Object.assign(prev, readButtons(gp));
+  }
+  $("resetMap").onclick = () => { bindings = {}; saveBindings(); stopListening(); };
+  renderMap();
+
+  function readDefaults(gp){
+    const b = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
+    const r = {};
+    for(const a of ACTIONS) r[a.id] = a.idx.some(b);
+    // D-pad reported as axes on some non-standard setups
+    const ax = gp.axes || [];
+    if(gp.mapping !== "standard"){
+      if(ax.length >= 8){ if(ax[7] < -0.5) r.rowUp = true; if(ax[7] > 0.5) r.rowDown = true; }
+      if(ax.length >= 10 && Math.abs(ax[9]) <= 1){
+        const h = ax[9];
+        if(Math.abs(h + 1) < 0.1 || Math.abs(h - 1) < 0.1) r.rowUp = true;
+        if(Math.abs(h - 0.14) < 0.1) r.rowDown = true;
+      }
+    }
+    return r;
+  }
+  function readButtons(gp){
+    const r = readDefaults(gp);
+    for(const a of ACTIONS) if(bindings[a.id]) r[a.id] = bindPressed(gp, bindings[a.id]);
+    return r;
+  }
+
+  let lastShown = -1;
+  function showLastInput(gp){
+    const i = gp.buttons.findIndex(b => b.pressed);
+    if(i >= 0 && i !== lastShown){
+      const raw = window.padRawNames && window.padRawNames[i];
+      $("lastInput").textContent = `Last button pressed: ${btnName(i)}` + (raw ? ` (phone reports ${raw})` : "");
+    }
+    lastShown = i;
+  }
+
+  function poll(){
+    let pads = [];
+    try{ pads = navigator.getGamepads ? navigator.getGamepads() : []; }
+    catch(e){
+      // This screen isn't allowed to use controllers (e.g. a preview window)
+      $("padText").textContent = "Controller blocked here";
+      $("padHint").textContent = "This window can't use a controller. Open the Stitch Counter app on your phone instead.";
+      return;
+    }
+    let gp = null;
+    for(const p of pads){ if(p && p.connected){ gp = p; break; } }
+    activePad = gp;
+    if(!!gp !== padSeen){
+      padSeen = !!gp;
+      $("pad").classList.toggle("on", padSeen);
+      $("padText").textContent = padSeen ? "Controller connected" : "No controller";
+      $("padHint").style.display = padSeen ? "none" : "";
+    }
+    if(gp){
+      showLastInput(gp);
+      if(listeningFor){ captureBinding(gp); }
+      else {
+        const now = readButtons(gp);
+        for(const a of ACTIONS) if(now[a.id] && !prev[a.id]) RUN[a.id]();
+        Object.assign(prev, now);
+      }
+    }
+    requestAnimationFrame(poll);
+  }
+  requestAnimationFrame(poll);
+
+  // Tapped buttons shouldn't keep focus (a controller press could "click" them)
+  document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("button"); if(b) setTimeout(() => b.blur(), 0); });
+  // Arrow-key fallback when no controller is detected
+  document.addEventListener("keydown", e => {
+    if(e.target && e.target.tagName === "INPUT") return;
+    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter"," "].includes(e.key)) e.preventDefault();
+    if(padSeen) return;
+    if(e.key === "ArrowUp") addRows();
+    if(e.key === "ArrowDown") removeRows();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
