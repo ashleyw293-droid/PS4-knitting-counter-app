@@ -79,11 +79,18 @@ jobs:
                   }
               }
 
+              private boolean fromController(KeyEvent event) {
+                  InputDevice dev = event.getDevice();
+                  int s = dev != null ? dev.getSources() : event.getSource();
+                  return (s & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD
+                      || (s & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK;
+              }
+
               @Override
               public boolean dispatchKeyEvent(KeyEvent event) {
                   int code = event.getKeyCode();
                   String name = keyName(code);
-                  if (name == null && KeyEvent.isGamepadButton(code)) name = "key" + code;
+                  if (name == null && (KeyEvent.isGamepadButton(code) || fromController(event))) name = "key" + code;
                   if (name != null) {
                       String raw = KeyEvent.keyCodeToString(code).replace("KEYCODE_", "");
                       if (event.getRepeatCount() == 0) {
