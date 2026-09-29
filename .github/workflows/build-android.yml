@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: stitch-counter-app
     steps:
       - uses: actions/checkout@v4
 
@@ -45,4 +48,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: stitch-counter-app
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: stitch-counter-app/android/app/build/outputs/apk/debug/app-debug.apk
