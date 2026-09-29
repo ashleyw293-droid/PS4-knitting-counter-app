@@ -42,6 +42,14 @@ h1{font-size:1.15rem; font-weight:800; margin:0; letter-spacing:-.01em}
 .pad.on .dot{background:var(--knit)}
 .pad.on{color:var(--ink)}
 
+.projects{display:flex; gap:.5rem; margin-bottom:.75rem}
+.projects select{flex:1; min-width:0; font:inherit; font-weight:600; color:var(--ink); background:var(--surface);
+  border:1.5px solid var(--line); border-radius:.75rem; padding:.55rem .7rem}
+.small{border:1.5px solid var(--line); background:var(--surface); border-radius:.75rem; padding:.5rem .9rem; white-space:nowrap}
+.projrow{display:flex; gap:.5rem}
+.projrow input{flex:1; min-width:0; font:inherit; color:var(--ink); background:var(--surface);
+  border:1.5px solid var(--line); border-radius:.75rem; padding:.5rem .7rem}
+.danger{color:var(--decrease)}
 .counter{background:var(--surface); border-radius:1.5rem; padding:1.25rem 1.25rem 1rem;
   border:2px solid var(--row); transition:border-color .2s}
 .rowline{display:flex; justify-content:space-between; align-items:baseline; font-size:.95rem; color:var(--muted)}
@@ -111,6 +119,11 @@ h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
     <div class="pad" id="pad" role="status" aria-live="polite"><span class="dot"></span><span id="padText">No controller</span></div>
   </div>
 
+  <div class="projects">
+    <select id="projSelect" aria-label="Project"></select>
+    <button class="small" id="projNew">New project</button>
+  </div>
+
   <div class="counter">
     <div class="rowline"><span>Up next</span><strong id="rowType">Knit row</strong></div>
     <div class="big" id="count" aria-live="polite">0</div>
@@ -146,6 +159,14 @@ h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
   </section>
 
   <section>
+    <h2>Project name</h2>
+    <div class="projrow">
+      <input id="projName" type="text" maxlength="40" aria-label="Project name">
+      <button class="small danger" id="projDelete">Delete project</button>
+    </div>
+  </section>
+
+  <section>
     <h2>Options</h2>
     <div class="toggles">
       <label><input type="checkbox" id="optAlt"> Switch between knit and purl after each row</label>
@@ -168,40 +189,63 @@ h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
     <ul class="history" id="history"></ul>
   </section>
 
-  <button class="reset" id="resetAll">Clear all rows and start over</button>
+  <button class="reset" id="resetAll">Clear this project&rsquo;s rows</button>
 </main>
 
 <script>
 (function(){
   const TYPES = ["knit","purl","increase","decrease"];
   const LABEL = {knit:"Knit",purl:"Purl",increase:"Increase",decrease:"Decrease"};
-  const KEY = "stitch-counter-rows-v1";
-  const defaults = {step:1, type:"knit", alternate:false, history:[]};
+  const KEY = "stitch-counter-projects-v1";
+  const OLD_KEY = "stitch-counter-rows-v1";
   const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  const newProject = name => ({id:newId(), name, type:"knit", history:[]});
 
   let state = load();
   const undoStack = [];
 
   function load(){
-    try{ const raw = localStorage.getItem(KEY); if(raw) return Object.assign({}, defaults, JSON.parse(raw)); }catch(e){}
-    return Object.assign({}, defaults, {history:[]});
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(raw){ const s = JSON.parse(raw); if(s.projects && s.projects.length) return s; }
+      const old = localStorage.getItem(OLD_KEY);
+      if(old){
+        const o = JSON.parse(old);
+        const p = {id:newId(), name:"My project", type:o.type || "knit", history:o.history || []};
+        return {step:o.step || 1, alternate:!!o.alternate, projects:[p], currentId:p.id};
+      }
+    }catch(e){}
+    const p = newProject("My project");
+    return {step:1, alternate:false, projects:[p], currentId:p.id};
   }
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
   function snapshot(){ undoStack.push(JSON.stringify(state)); if(undoStack.length > 100) undoStack.shift(); }
+  function cur(){
+    let p = state.projects.find(x => x.id === state.currentId);
+    if(!p){ p = state.projects[0]; state.currentId = p.id; }
+    return p;
+  }
 
   function render(bump){
-    const rows = state.history.length;
-    document.documentElement.style.setProperty("--row", `var(--${state.type})`);
+    const p = cur();
+    const rows = p.history.length;
+    document.documentElement.style.setProperty("--row", `var(--${p.type})`);
     const countEl = $("count");
     countEl.textContent = rows;
     if(bump){ countEl.classList.remove("bump"); void countEl.offsetWidth; countEl.classList.add("bump"); }
     $("unit").textContent = rows === 1 ? "row" : "rows";
-    $("rowType").textContent = LABEL[state.type] + " row";
+    $("rowType").textContent = LABEL[p.type] + " row";
     $("plusN").textContent = state.step === 1 ? "1 row" : state.step + " rows";
     $("minusN").textContent = state.step === 1 ? "1 row" : state.step + " rows";
     $("undo").disabled = undoStack.length === 0;
 
-    document.querySelectorAll("#types button").forEach(b => b.setAttribute("aria-pressed", b.dataset.type === state.type));
+    $("projSelect").innerHTML = state.projects.map(x =>
+      `<option value="${x.id}"${x.id === p.id ? " selected" : ""}>${esc(x.name)} (${x.history.length})</option>`).join("");
+    if(document.activeElement !== $("projName")) $("projName").value = p.name;
+
+    document.querySelectorAll("#types button").forEach(b => b.setAttribute("aria-pressed", b.dataset.type === p.type));
     let preset = false;
     document.querySelectorAll("#stepSeg button").forEach(b => {
       const on = Number(b.dataset.step) === state.step; if(on) preset = true;
@@ -211,56 +255,89 @@ h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
     if(document.activeElement !== custom) custom.value = preset ? "" : state.step;
     $("optAlt").checked = state.alternate;
 
-    // Recent rows as colored stitches, newest last
-    const recent = state.history.slice(-60);
+    const recent = p.history.slice(-60);
     let html = rows > 60 ? `<span class="more">+${rows - 60}</span>` : "";
-    for(const h of recent) html += `<svg viewBox="0 0 14 18"><path style="stroke:var(--${h.type})" d="M2 3 L7 15 L12 3"/></svg>`;
+    for(const r of recent) html += `<svg viewBox="0 0 14 18"><path style="stroke:var(--${r.type})" d="M2 3 L7 15 L12 3"/></svg>`;
     $("chain").innerHTML = html;
 
     const totals = {knit:0,purl:0,increase:0,decrease:0};
-    state.history.forEach(h => totals[h.type]++);
+    p.history.forEach(r => totals[r.type]++);
     $("summary").textContent = rows ? TYPES.filter(t => totals[t]).map(t => `${LABEL[t]}: ${totals[t]}`).join(", ") : "";
     $("emptyHist").style.display = rows ? "none" : "";
-    $("history").innerHTML = state.history.slice(-40).reverse().map(h =>
-      `<li><span class="n">Row ${h.row}</span><span class="tag" style="color:var(--${h.type})">${LABEL[h.type]}</span></li>`).join("");
+    $("history").innerHTML = p.history.slice(-40).reverse().map(r =>
+      `<li><span class="n">Row ${r.row}</span><span class="tag" style="color:var(--${r.type})">${LABEL[r.type]}</span></li>`).join("");
   }
 
-  // Actions
+  // Row actions
   function addRows(){
-    snapshot();
+    const p = cur(); snapshot();
     for(let i = 0; i < state.step; i++){
-      state.history.push({row: state.history.length + 1, type: state.type});
+      p.history.push({row: p.history.length + 1, type: p.type});
       if(state.alternate){
-        if(state.type === "knit") state.type = "purl";
-        else if(state.type === "purl") state.type = "knit";
+        if(p.type === "knit") p.type = "purl";
+        else if(p.type === "purl") p.type = "knit";
       }
     }
     save(); render(true); rumble();
   }
   function removeRows(){
-    if(!state.history.length) return;
+    const p = cur(); if(!p.history.length) return;
     snapshot();
     let removed = null;
-    for(let i = 0; i < state.step && state.history.length; i++) removed = state.history.pop();
-    if(removed) state.type = removed.type; // you're back on that row, so it's up next again
+    for(let i = 0; i < state.step && p.history.length; i++) removed = p.history.pop();
+    if(removed) p.type = removed.type; // you're back on that row, so it's up next again
     save(); render(true);
   }
-  function setType(t){ if(t === state.type) return; snapshot(); state.type = t; save(); render(); }
+  function setType(t){ const p = cur(); if(t === p.type) return; snapshot(); p.type = t; save(); render(); }
   function undo(){ if(!undoStack.length) return; state = JSON.parse(undoStack.pop()); save(); render(true); }
   function setStep(n){ n = Math.round(Number(n)); if(!n || n < 1) return; state.step = Math.min(99, n); save(); render(); }
+
+  // Project actions
+  function switchProject(id){ if(id === state.currentId) return; state.currentId = id; save(); render(true); }
+  function cycleProject(dir){
+    if(state.projects.length < 2) return;
+    const i = state.projects.findIndex(x => x.id === state.currentId);
+    switchProject(state.projects[(i + dir + state.projects.length) % state.projects.length].id);
+    rumble();
+  }
+  function addProject(){
+    snapshot();
+    const p = newProject("Project " + (state.projects.length + 1));
+    state.projects.push(p); state.currentId = p.id;
+    save(); render(true);
+    const input = $("projName"); input.focus(); input.select();
+  }
+  function renameProject(name){
+    name = name.trim(); const p = cur();
+    if(!name || name === p.name){ render(); return; }
+    snapshot(); p.name = name; save(); render();
+  }
+  function deleteProject(){
+    const p = cur();
+    if(!confirm(`Delete "${p.name}" and all its rows?`)) return;
+    snapshot();
+    state.projects = state.projects.filter(x => x.id !== p.id);
+    if(!state.projects.length) state.projects.push(newProject("My project"));
+    state.currentId = state.projects[0].id;
+    save(); render(true);
+  }
 
   $("plus").onclick = addRows;
   $("minus").onclick = removeRows;
   $("undo").onclick = undo;
+  $("projSelect").onchange = e => switchProject(e.target.value);
+  $("projNew").onclick = addProject;
+  $("projName").addEventListener("change", e => renameProject(e.target.value));
+  $("projName").addEventListener("keydown", e => { if(e.key === "Enter") e.target.blur(); });
+  $("projDelete").onclick = deleteProject;
   document.querySelectorAll("#types button").forEach(b => b.onclick = () => setType(b.dataset.type));
   document.querySelectorAll("#stepSeg button").forEach(b => b.onclick = () => setStep(b.dataset.step));
   $("customStep").addEventListener("change", e => setStep(e.target.value));
   $("optAlt").onchange = e => { state.alternate = e.target.checked; save(); };
   $("resetAll").onclick = () => {
-    if(!confirm("Clear all counted rows?")) return;
-    snapshot();
-    state = Object.assign({}, defaults, {history:[], step:state.step, alternate:state.alternate});
-    save(); render(true);
+    const p = cur();
+    if(!confirm(`Clear all rows in "${p.name}"?`)) return;
+    snapshot(); p.history = []; p.type = "knit"; save(); render(true);
   };
 
   // Keep screen on
@@ -288,10 +365,13 @@ h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
     {id:"knit",     label:"Knit row",        def:"Square (□)",       idx:[2]},
     {id:"purl",     label:"Purl row",        def:"Cross (✕)",        idx:[0]},
     {id:"increase", label:"Increase row",    def:"Triangle (△)",     idx:[3]},
-    {id:"decrease", label:"Decrease row",    def:"Circle (○)",       idx:[1]}
+    {id:"decrease", label:"Decrease row",    def:"Circle (○)",       idx:[1]},
+    {id:"prevProj", label:"Previous project", def:"L1",              idx:[4]},
+    {id:"nextProj", label:"Next project",    def:"R1",               idx:[5]}
   ];
   const RUN = {rowUp:addRows, rowDown:removeRows, knit:()=>setType("knit"), purl:()=>setType("purl"),
-               increase:()=>setType("increase"), decrease:()=>setType("decrease")};
+               increase:()=>setType("increase"), decrease:()=>setType("decrease"),
+               prevProj:()=>cycleProject(-1), nextProj:()=>cycleProject(1)};
   const BTN_NAMES = ["Cross (✕)","Circle (○)","Square (□)","Triangle (△)","L1","R1","L2","R2","Share","Options","L3 (left stick click)","R3 (right stick click)","D-pad up","D-pad down","D-pad left","D-pad right","PS button","Touchpad"];
   const MAP_KEY = "stitch-counter-buttons-v2";
   let bindings = {};
