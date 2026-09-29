@@ -1,5 +1,8 @@
 {
   "appId": "com.stitchcounter.app",
   "appName": "Stitch Counter",
-  "webDir": "www"
+  "webDir": "www",
+  "android": {
+    "adjustMarginsForEdgeToEdge": "force"
+  }
 }
