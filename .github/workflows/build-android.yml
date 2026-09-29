@@ -33,6 +33,125 @@ jobs:
       - name: Create Android project
         run: npx cap add android
 
+      - name: Controller support
+        run: |
+          cat > android/app/src/main/java/com/stitchcounter/app/MainActivity.java <<'EOF'
+          package com.stitchcounter.app;
+
+          import android.view.InputDevice;
+          import android.view.KeyEvent;
+          import android.view.MotionEvent;
+          import android.webkit.WebView;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              private int hatX = 0;
+              private int hatY = 0;
+
+              private void send(String name, boolean down) {
+                  if (bridge == null) return;
+                  final WebView wv = bridge.getWebView();
+                  if (wv == null) return;
+                  final String js = "window.nativePad && window.nativePad('" + name + "'," + down + ")";
+                  wv.post(() -> wv.evaluateJavascript(js, null));
+              }
+
+              private String keyName(int code) {
+                  switch (code) {
+                      case KeyEvent.KEYCODE_DPAD_UP: return "up";
+                      case KeyEvent.KEYCODE_DPAD_DOWN: return "down";
+                      case KeyEvent.KEYCODE_DPAD_LEFT: return "left";
+                      case KeyEvent.KEYCODE_DPAD_RIGHT: return "right";
+                      case KeyEvent.KEYCODE_BUTTON_A: return "cross";
+                      case KeyEvent.KEYCODE_BUTTON_B: return "circle";
+                      case KeyEvent.KEYCODE_BUTTON_X: return "square";
+                      case KeyEvent.KEYCODE_BUTTON_Y: return "triangle";
+                      case KeyEvent.KEYCODE_BUTTON_L1: return "l1";
+                      case KeyEvent.KEYCODE_BUTTON_R1: return "r1";
+                      case KeyEvent.KEYCODE_BUTTON_L2: return "l2";
+                      case KeyEvent.KEYCODE_BUTTON_R2: return "r2";
+                      case KeyEvent.KEYCODE_BUTTON_SELECT: return "share";
+                      case KeyEvent.KEYCODE_BUTTON_START: return "options";
+                      case KeyEvent.KEYCODE_BUTTON_THUMBL: return "l3";
+                      case KeyEvent.KEYCODE_BUTTON_THUMBR: return "r3";
+                      case KeyEvent.KEYCODE_BUTTON_MODE: return "ps";
+                      default: return null;
+                  }
+              }
+
+              private boolean isPad(int source) {
+                  return (source & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD
+                      || (source & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK
+                      || (source & InputDevice.SOURCE_DPAD) == InputDevice.SOURCE_DPAD;
+              }
+
+              @Override
+              public boolean dispatchKeyEvent(KeyEvent event) {
+                  String name = keyName(event.getKeyCode());
+                  if (name != null && isPad(event.getSource())) {
+                      if (event.getRepeatCount() == 0) {
+                          if (event.getAction() == KeyEvent.ACTION_DOWN) send(name, true);
+                          else if (event.getAction() == KeyEvent.ACTION_UP) send(name, false);
+                      }
+                      return true;
+                  }
+                  return super.dispatchKeyEvent(event);
+              }
+
+              @Override
+              public boolean dispatchGenericMotionEvent(MotionEvent event) {
+                  if ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK
+                          && event.getAction() == MotionEvent.ACTION_MOVE) {
+                      int x = Math.round(event.getAxisValue(MotionEvent.AXIS_HAT_X));
+                      int y = Math.round(event.getAxisValue(MotionEvent.AXIS_HAT_Y));
+                      if (x != hatX) {
+                          if (hatX == -1) send("left", false);
+                          if (hatX == 1) send("right", false);
+                          if (x == -1) send("left", true);
+                          if (x == 1) send("right", true);
+                          hatX = x;
+                      }
+                      if (y != hatY) {
+                          if (hatY == -1) send("up", false);
+                          if (hatY == 1) send("down", false);
+                          if (y == -1) send("up", true);
+                          if (y == 1) send("down", true);
+                          hatY = y;
+                      }
+                      return true;
+                  }
+                  return super.dispatchGenericMotionEvent(event);
+              }
+          }
+          EOF
+          cat > www/native-pad.js <<'EOF'
+          (function () {
+            var IDX = {cross:0, circle:1, square:2, triangle:3, l1:4, r1:5, l2:6, r2:7,
+                       share:8, options:9, l3:10, r3:11, up:12, down:13, left:14, right:15, ps:16};
+            var buttons = [];
+            for (var i = 0; i < 17; i++) buttons.push({pressed:false, touched:false, value:0});
+            var pad = {id:"Controller", index:0, connected:true, mapping:"standard",
+                       axes:[0,0,0,0], buttons:buttons, timestamp:0};
+            var active = false;
+            function useNative() {
+              if (active) return;
+              active = true;
+              var fn = function () { return [pad]; };
+              try { Object.defineProperty(navigator, "getGamepads", {configurable:true, value:fn}); }
+              catch (e) { navigator.getGamepads = fn; }
+            }
+            window.nativePad = function (name, down) {
+              var i = IDX[name];
+              if (i === undefined) return;
+              useNative();
+              pad.timestamp = performance.now();
+              if (down) { buttons[i].pressed = true; buttons[i].value = 1; }
+              else setTimeout(function () { buttons[i].pressed = false; buttons[i].value = 0; }, 50);
+            };
+          })();
+          EOF
+          sed -i '0,/<script>/s//<script src="native-pad.js"><\/script>\n<script>/' www/index.html
+
       - name: App icon
         continue-on-error: true
         run: npx capacitor-assets generate --android
