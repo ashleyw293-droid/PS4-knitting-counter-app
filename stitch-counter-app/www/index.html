@@ -256,7 +256,7 @@ h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
       unit.textContent = inSection >= p.goal ? `of ${p.goal} rows, goal reached` : `of ${p.goal} rows`;
       unit.classList.toggle("done", inSection >= p.goal);
     } else { unit.textContent = inSection === 1 ? "row" : "rows"; unit.classList.remove("done"); }
-    $("total").textContent = p.sections.length > 1 ? `Section ${p.sections.length}, ${rows} rows total` : "";
+    $("total").textContent = p.sections.length > 1 ? `Section ${p.sections.length}, ${rows} ${rows === 1 ? "row" : "rows"} total` : "";
     if(document.activeElement !== $("goal")) $("goal").value = p.goal || "";
     $("rowType").textContent = LABEL[p.type] + " row";
     $("plusN").textContent = state.step === 1 ? "1 row" : state.step + " rows";
@@ -402,8 +402,8 @@ h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
   }
 
   const ACTIONS = [
-    {id:"rowUp",    label:"Add a row",       def:"D-pad up or R2",   idx:[12,7]},
-    {id:"rowDown",  label:"Take away a row", def:"D-pad down or L2", idx:[13,6]},
+    {id:"rowUp",    label:"Add a row",       def:"R2",               idx:[7]},
+    {id:"rowDown",  label:"Take away a row", def:"L2",               idx:[6]},
     {id:"knit",     label:"Knit row",        def:"Square (□)",       idx:[2]},
     {id:"purl",     label:"Purl row",        def:"Cross (✕)",        idx:[0]},
     {id:"increase", label:"Increase row",    def:"Triangle (△)",     idx:[3]},
@@ -474,16 +474,6 @@ h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
     const b = i => !!(gp.buttons[i] && gp.buttons[i].pressed);
     const r = {};
     for(const a of ACTIONS) r[a.id] = a.idx.some(b);
-    // D-pad reported as axes on some non-standard setups
-    const ax = gp.axes || [];
-    if(gp.mapping !== "standard"){
-      if(ax.length >= 8){ if(ax[7] < -0.5) r.rowUp = true; if(ax[7] > 0.5) r.rowDown = true; }
-      if(ax.length >= 10 && Math.abs(ax[9]) <= 1){
-        const h = ax[9];
-        if(Math.abs(h + 1) < 0.1 || Math.abs(h - 1) < 0.1) r.rowUp = true;
-        if(Math.abs(h - 0.14) < 0.1) r.rowDown = true;
-      }
-    }
     return r;
   }
   function readButtons(gp){
@@ -539,9 +529,7 @@ h2{font-size:.95rem; font-weight:600; margin:0 0 .5rem; color:var(--muted)}
   document.addEventListener("keydown", e => {
     if(e.target && e.target.tagName === "INPUT") return;
     if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter"," "].includes(e.key)) e.preventDefault();
-    if(padSeen) return;
-    if(e.key === "ArrowUp") addRows();
-    if(e.key === "ArrowDown") removeRows();
+    // (arrow keys intentionally don't count rows)
   });
 
   render();
